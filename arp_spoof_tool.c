@@ -56,13 +56,13 @@
  // function to print help
  void print_help(char *bin){
      printf("Avaliable arguments:\n");
-     printf("---------------------------\n");
+     printf("------------------------------------------------------------\n");
      printf("-h or --help:\t\tprint help text\n");
      printf("-v or --version:\tprint version\n");
      printf("-h or-help:\t\tPrint this help text.\n"); 
      printf("-l orlookup:\t\tPrint the available interfaces.\n");
      printf("-i or-interface:\tProvide the interface to sniff on.\n");
-     printf("------------------------------------------------\n"); 
+     printf("------------------------------------------------------------\n"); 
      printf("Usage: %s -i <interface> [you can lookup the available interfaces using -l]\n",bin);
         
  }
@@ -74,6 +74,58 @@
     struct pcap_pkthdr header;
     struct ether_header *eptr;
     u_char *hard_ptr;
+     pack_desc = pcap_open_live(interfaces->name, BUFSIZ, 0, 1, error);
+    if (pack_desc == NULL) {
+        printf("Error opening device: %s\n", error);
+        return -1;
+    }
+
+    while (1) {
+        // Capture a packet
+        packet = pcap_next(pack_desc, &header);
+        if (packet == NULL) {
+            printf("Error: cannot capture packet\n");
+            continue; // Continue instead of returning -1
+        }
+
+        // Print packet information
+        printf("----------------------------------------------\n");
+        printf("Received a packet with length %d\n", header.len);
+        printf("Received at %s", ctime((const time_t*)&header.ts.tv_sec));
+        printf("Ethernet header length: %d\n", ETHER_HDR_LEN);
+
+        eptr = (struct ether_header *)packet;
+        if(ntohs(eptr->ether_type) != ETHERTYPE_ARP){
+             printf("Ethernet address constant length: %zu\n", sizeof(*eptr));
+
+            // Print Ethernet addresses manually
+            printf("Destination Address: ");
+            do{
+                printf("%s%02x", (i==ETHER_ADDR_LEN) ? "" : ":", *hard_ptr++);
+            }while(--i>0);
+            hard_ptr=eptr->ether_shost;
+            printf("\n");
+
+            printf("Source Address: ");
+            do{
+                printf("%s%02x", (i==ETHER_ADDR_LEN) ? "" : ":", *hard_ptr++);
+            }while(--i>0);
+            printf("\n");
+            printf("----------------------------------------------\n");
+            
+        }
+       
+
+       /* if (ntohs(eptr->ether_type) == ETHERTYPE_IP) {
+            printf("Ethernet type hex: %x; dec: %d is an IP packet\n", ETHERTYPE_IP, ETHERTYPE_IP);
+        } else if (ntohs(eptr->ether_type) == ETHERTYPE_ARP) {
+            printf("Ethernet type hex: %x; dec: %d is an ARP packet\n", ETHERTYPE_ARP, ETHERTYPE_ARP);
+        } else {
+            printf("Ethernet type hex: %x; dec: %d is an unknown packet type:\n", ntohs(eptr->ether_type), ntohs(eptr->ether_type));
+        } */
+        printf("----------------------------------------------\n");
+    }
+
 
  }
  // main function
