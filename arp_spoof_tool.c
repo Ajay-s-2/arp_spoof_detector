@@ -9,6 +9,21 @@
 #include <time.h>
 #include <netinet/if_ether.h> 
 #include<string.h>
+#define ARP_REQUEST 1 // arp request
+#define ARP_RESPONSE 2 // arp response
+// struct for arp header
+typedef struct _arp_hdr arp_hdr;
+     struct arp_hdr{
+        uint16_t htype; // hardware type
+        uint16_t ptype; // protocol type
+        uint8_t hlen;   // hardware address length
+        uint8_t plen;   // protocol address len
+        uint16_t opcode; // operation code (request or responce )
+        uint8_t sender_mac[6]; //sender mac address
+        uint8_t sender_ip[4];// sender ip address
+        uint8_t target_mac[6]; // target mac address
+        uint8_t target_ip[4];// target ip address
+     };
 
  
  // function to list the avalible devices
@@ -75,6 +90,7 @@
     struct ether_header *eptr;
     u_char *hard_ptr;
      pack_desc = pcap_open_live(interfaces->name, BUFSIZ, 0, 1, error);
+     
     if (pack_desc == NULL) {
         printf("Error opening device: %s\n", error);
         return -1;
